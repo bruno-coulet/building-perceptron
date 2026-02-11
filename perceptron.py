@@ -39,14 +39,19 @@ print(f"weights générés :\n{weights}\n")
 # ========= Perceptron en POO ====================================
 class Perceptron:
 
-    def __init__(self, input_size=INPUT_SIZE, inputs=inputs, weights=weights, threshold=THRESHOLD, learning_rate=LEARNING_RATE):
+    # def __init__(self, input_size=INPUT_SIZE, inputs=inputs, weights=weights, threshold=THRESHOLD, learning_rate=LEARNING_RATE):
 
-        self.input_size = input_size
+    #     self.input_size = input_size
+    #     self.inputs = inputs
+    #     self.weights = weights
+    #     self.threshold = threshold
+    #     self.learning_rate = learning_rate
+    #     self.bias = 0.0
+    def __init__(self, threshold=THRESHOLD):
         self.inputs = inputs
-        self.weights = weights
         self.threshold = threshold
-        self.learning_rate = learning_rate
-        self.bias = 0.0
+
+
 
     # Fonction d'activation
     def threshold_function(self, weighted_sum):
