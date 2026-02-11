@@ -1,16 +1,14 @@
 import random
 
-THRESHOLD = .5
-
 # ======== Début - Données factices générées de manière aléatoire ================
 try:
-    INPUT_SIZE = int(input("\nChoisissez la taille de l'input (entrez un chiffre) : "))
+    input_size = int(input("\nChoisissez la taille de l'input (entrez un chiffre) : "))
 except ValueError:
     print("\nVeuillez entrer un ENTIER, sinon cela ne fonctionnera pas.\n")
     exit()
 
 try:
-    THRESHOLD = float(input("Choisissez le seuil (entrez un décimal) : "))
+    threshold = float(input("Choisissez le seuil (entrez un décimal) : "))
 except ValueError:
     print("Veuillez entrer un NOMBRE, sinon cela ne fonctionnera pas.\n")
     exit()
@@ -18,7 +16,7 @@ except ValueError:
 inputs = []
 weights = []
 
-for _ in range(INPUT_SIZE):
+for _ in range(input_size):
     # génère un entier, bornes inclusives [0, 10]
     inputs.append(random.randint(0, 10))
     # génère un float,distribution uniforme sur l'intervalle [0.0, 1.0[
@@ -37,7 +35,7 @@ print(f"weights générés :\n{weights}\n")
 # ========= Perceptron en POO ====================================
 class Perceptron:
 
-    # def __init__(self, input_size=INPUT_SIZE, inputs=inputs, weights=weights, threshold=THRESHOLD, learning_rate=LEARNING_RATE):
+    # def __init__(self, input_size=input_size, inputs=inputs, weights=weights, threshold=threshold, learning_rate=LEARNING_RATE):
 
     #     self.input_size = input_size
     #     self.inputs = inputs
@@ -45,7 +43,7 @@ class Perceptron:
     #     self.threshold = threshold
     #     self.learning_rate = learning_rate
     #     self.bias = 0.0
-    def __init__(self, threshold=THRESHOLD):
+    def __init__(self, threshold=threshold):
         self.inputs = inputs
         self.threshold = threshold
 
