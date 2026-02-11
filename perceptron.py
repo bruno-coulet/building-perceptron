@@ -1,45 +1,37 @@
-# Implémentation d'un perceptron en programmation séquentielle
-
-x_input = [2, 5, 1, 8]
-w_weights = [.4, .3, .2, .1]
-threshold = .5
+import random
+# import numpy as np
 
 
 
-# Fonction d'activation : step function
-def threshold_step(weighted_sum):
-    print("Calcul de la fonction d'activation :")
-    if weighted_sum >= threshold:
-        print(f"Threshold : {threshold}\nSomme pondérée : {weighted_sum}\nSomme pondérée >= threshold\n")
-        return 1
-    else:
-        print(f"Threshold : {threshold}\nSomme pondérée : {weighted_sum}\nSomme pondérée < threshold\n")
-        return 0
+# ======== Données factices générées de manière aléatoire ================
+try:
+    INPUT_SIZE = int(input("\nChoisissez la taille de l'input (entrez un chiffre) : "))
+except ValueError:
+    print("\nVeuillez entrer un ENTIER, sinon cela ne fonctionnera pas.\n")
+    exit()
+
+try:
+    THRESHOLD = float(input("Choisissez le seuil (entrez un chiffre) : "))
+except ValueError:
+    print("Veuillez entrer un NOMBRE, sinon cela ne fonctionnera pas.\n")
+    exit()
+
+LEARNING_RATE = 0.1
 
 
+x_input = []
+w_weights = []
 
-# Fonction de calcul du perceptron (appelle la fonction d'activation)
-def perceptron():
+for _ in range(INPUT_SIZE):
+    # génère un entier, bornes inclusives [0, 10]
+    x_input.append(random.randint(0, 10))
+    # génère un float,distribution uniforme sur l'intervalle [0.0, 1.0[
+    w_weights.append(random.random())
 
-    weighted_sum=0
-    print(f"\nVecteur d'input : ({len(x_input)},)\n")
-    print("Calcul de la somme pondérée :")
+print(f"\ninput générés :\n{x_input}\n")
+print(f"weights générés :\n{w_weights}\n")
 
-    for x,w in zip(x_input, w_weights):
-        weighted_sum += x * w
-        print(f"Somme partielle index {x_input.index(x)} : {x} * {w} = {str(weighted_sum)}")
-    print()
-
-    return threshold_step(weighted_sum)
-
-output = perceptron()
-print(f"Output = {str(output)}\n")
-
-
-
-
-
-# Implémentation d'un perceptron en POO
+# ========= Perceptron en POO ====================================
 
 class Perceptron:
 
