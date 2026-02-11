@@ -1,7 +1,5 @@
 import random
-# import numpy as np
 
-LEARNING_RATE = 0.1
 THRESHOLD = .5
 
 # ======== Début - Données factices générées de manière aléatoire ================
@@ -84,7 +82,6 @@ class Perceptron:
 
 if __name__ == "__main__" :
 
-    output = Perceptron()
-    # print(f"Output = {str(output)}\n")
-    sortie = output.perceptron()
+    mon_premier_truc_bidule = Perceptron()
+    sortie = mon_premier_truc_bidule.perceptron()
     print(f"Sortie du perceptron = {str(sortie)}\n")
