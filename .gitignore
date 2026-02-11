@@ -1,0 +1,12 @@
+.venv/
+.github/copilot-instructions.md
+CLAUDE.md
+__pycache__/
+*.pyc
+.DS_Store
+*.sqlite3
+.env
+
+
+raw_data/
+data/
