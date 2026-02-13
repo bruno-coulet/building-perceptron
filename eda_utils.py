@@ -18,6 +18,8 @@ import seaborn as sns
 from typing import Dict, Tuple, Optional, Any, List, Iterable
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import RobustScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import LabelEncoder
 
 # ===============================
@@ -281,7 +283,107 @@ def normalize_all_text_columns(df):
     return df
 
 
+# ===============================
+# PREPROCESSING NUMERIC / CATÉGORIQUE
+# ===============================
+"""
+SANS FONCTION
+    # Identification des colonnes numérique et catégorielle
+    numeric_columns = df.select_dtypes(include=['number']).columns
+    categorical_columns = df.select_dtypes(exclude=['number']).columns
 
+    # Transformation des données
+    column_transformer = ColumnTransformer(
+        transformers=[
+            ('num', RobustScaler(), numeric_columns),
+            ('cat', OneHotEncoder(drop='first'), categorical_columns)
+        ]
+    )
+
+    X_train_scaled = column_transformer.fit_transform(X_train)
+    X_test_scaled = column_transformer.transform(X_test)
+"""
+
+# Fonction de preprocessing combiné pour les données numériques et catégoriques
+def identify_column_types(df):
+    """
+    Identifie automatiquement les colonnes numériques et catégorielles.
+
+    Args:
+        df (pd.DataFrame): Dataframe à analyser
+
+    Returns:
+        tuple: (colonnes numériques, colonnes catégorielles)
+    """
+    # S'assurer que l'entrée est un DataFrame
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+
+    numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+    categorical_columns = df.select_dtypes(exclude=['number']).columns.tolist()
+
+    return numeric_columns, categorical_columns
+
+
+def preprocess_data(X, numeric_columns=None, categorical_columns=None):
+    """
+    Prépare les données avec scaling robuste et one-hot encoding AVANT le split train/test.
+
+    Gère tous les cas de figure :
+    - Colonnes numériques et catégorielles
+    - Uniquement colonnes numériques
+    - Uniquement colonnes catégorielles
+    - Aucune colonne (levera une exception)
+
+    Args:
+        X (pd.DataFrame or pd.Series): Ensemble des features
+        numeric_columns (list, optional): Colonnes numériques. Si None, détecté automatiquement.
+        categorical_columns (list, optional): Colonnes catégorielles. Si None, détecté automatiquement.
+
+    Returns:
+        tuple: (X_preprocessed, column_transformer)
+
+    Raises:
+        ValueError: Si aucune colonne n'est présente
+    """
+    # S'assurer que l'entrée est un DataFrame
+    if isinstance(X, pd.Series):
+        X = X.to_frame()
+
+    # Si les colonnes ne sont pas spécifiées, les détecter automatiquement
+    if numeric_columns is None or categorical_columns is None:
+        numeric_columns, categorical_columns = identify_column_types(X)
+
+    # Vérifier qu'il y a au moins un type de colonne
+    if not numeric_columns and not categorical_columns:
+        raise ValueError("Aucune colonne numérique ou catégorielle trouvée dans le DataFrame.")
+
+    # Préparateurs par type de colonne
+    transformers = []
+
+    # Colonnes numériques
+    if numeric_columns:
+        transformers.append(('num', RobustScaler(), numeric_columns))
+
+    # Colonnes catégorielles
+    if categorical_columns:
+        transformers.append(('cat', OneHotEncoder(drop='first', handle_unknown='ignore'), categorical_columns))
+
+    # Créer le transformateur
+    column_transformer = ColumnTransformer(
+        transformers=transformers,
+        remainder='drop'  # Ne pas conserver les colonnes non transformées
+    )
+
+    # Ajuster et transformer
+    X_preprocessed = column_transformer.fit_transform(X)
+
+    return X_preprocessed, column_transformer
+
+
+
+# # Exemple d'utilisation : Préprocessing
+# X_preprocessed, preprocessor = preprocess_data(X)
 
 
 # ===============================
@@ -374,7 +476,7 @@ def plot_feature_collinearity(X: pd.DataFrame, figsize: tuple = (12, 10)):
     plt.show()
 
 # Recherche de corrélations avec la Cible
-def target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 10):
+def target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top: int = 10):
     """
     Calcule la corrélation entre toutes les features numériques et la cible.
     Retourne les n premières features les plus corrélées.
@@ -385,8 +487,8 @@ def target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 10):
     ----------
     X : pd.DataFrame
         DataFrame contenant les features numériques.
-    y : pd.Series
-        Series représentant la cible encodée (numérique : 0/1, etc).
+    y : Union[pd.Series, np.ndarray]
+        Series ou array représentant la cible encodée (numérique : 0/1, etc).
     n_top : int
         Nombre de top features à retourner.
     
@@ -400,7 +502,9 @@ def target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 10):
     
     # Créer un DataFrame temporaire avec les features numériques et la cible
     temp_df = X_numeric.copy()
-    temp_df['__target__'] = y.values
+    # Accepter à la fois Series et ndarray
+    target_values = y.values if isinstance(y, pd.Series) else y
+    temp_df['__target__'] = target_values
     
     # Calculer les corrélations avec la cible
     correlations = temp_df.corr()['__target__'].drop(labels=['__target__']).abs().sort_values(ascending=False)
@@ -408,7 +512,7 @@ def target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 10):
     return correlations.head(n_top)
 
 # Affiche un barplot des n variables les plus corrélées à la cible
-def plot_target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 15):
+def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top: int = 15):
     """
     Affiche un barplot des n variables les plus corrélées à la cible.
     
@@ -416,17 +520,20 @@ def plot_target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 15):
     ----------
     X : pd.DataFrame
         DataFrame contenant les features.
-    y : pd.Series
-        Series représentant la cible.
+    y : Union[pd.Series, np.ndarray]
+        Series ou array représentant la cible.
     n_top : int
         Nombre de top features à afficher.
     """
     # Obtenir les corrélations avec la cible
     corrs = target_correlations(X, y, n_top=n_top)
     
+    # Déterminer le nom de la cible
+    target_name = y.name if isinstance(y, pd.Series) else "Cible"
+    
     plt.figure(figsize=(10, 8))
     sns.barplot(x=corrs.values, y=corrs.index, hue=corrs.index, palette='viridis', legend=False)
-    plt.title(f"Top {n_top} des corrélations avec la cible : {y.name}")
+    plt.title(f"Top {n_top} des corrélations avec la cible : {target_name}")
     plt.xlabel("Coefficient de corrélation (valeur absolue)")
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.show()
