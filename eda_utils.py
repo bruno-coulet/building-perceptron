@@ -12,11 +12,13 @@ import numpy as np
 import unicodedata
 import re
 import math
+from typing import Union
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Dict, Tuple, Optional, Any, List, Iterable
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import LabelEncoder
 
 # ===============================
 # DÉTECTION DES COLONNES PROBLÉMATIQUES
@@ -286,6 +288,11 @@ def normalize_all_text_columns(df):
 # SÉLECTION ET EXPLORATION DES FEATURES
 # ===============================
 
+
+# Encode une colonne cible catégorique en numérique (0, 1, ...)
+
+
+
 # Filtre une liste de features pour ne garder que celles présentes
 def select_existing_features(features: Iterable[str], columns: Iterable[str]) -> List[str]:
     """
@@ -307,15 +314,26 @@ def select_existing_features(features: Iterable[str], columns: Iterable[str]) ->
     return [c for c in features if c in col_set]
 
 # Recherche de colinéarité (entre features)
-def feature_collinearity(df: pd.DataFrame, target_col: str, threshold: float = 0.8):
+def feature_collinearity(X: pd.DataFrame, threshold: float = 0.8):
     """
-    Identifie les paires de features fortement corrélées entre elles (colinéarité),
-    en excluant la colonne cible.
-    """
-    # On ne garde que les colonnes numériques et on exclut la cible
-    df_features = df.select_dtypes(include=[np.number]).drop(columns=[target_col], errors='ignore')
+    Identifie les paires de features fortement corrélées entre elles (colinéarité).
     
-    corr_matrix = df_features.corr().abs()
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame contenant les features numériques.
+    threshold : float
+        Seuil minimum de corrélation absolue à considérer comme colinéaire.
+    
+    Returns
+    -------
+    list
+        Liste de tuples (feature1, feature2, correlation) triés par corrélation décroissante.
+    """
+    # Sélectionner uniquement les colonnes numériques
+    X_numeric = X.select_dtypes(include=[np.number])
+    
+    corr_matrix = X_numeric.corr().abs()
     
     # On ne récupère que la partie supérieure de la matrice pour éviter les doublons (A/B et B/A)
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
@@ -330,49 +348,85 @@ def feature_collinearity(df: pd.DataFrame, target_col: str, threshold: float = 0
     
     return sorted(collinear_features, key=lambda x: x[2], reverse=True)
 
-# Affiche une heatmap des corrélations entre features (excluant la cible)
-def plot_feature_collinearity(df: pd.DataFrame, target_col: str, figsize: tuple = (12, 10)):
-    """Affiche la heatmap des corrélations entre features (exclut la cible)."""
-    # Sélection des numériques et exclusion de la cible
-    df_features = df.select_dtypes(include=[np.number]).drop(columns=[target_col], errors='ignore')
+# Affiche une heatmap des corrélations entre features
+def plot_feature_collinearity(X: pd.DataFrame, figsize: tuple = (12, 10)):
+    """
+    Affiche la heatmap des corrélations entre features (colinéarité).
     
-    corr = df_features.corr()
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame contenant les features numériques.
+    figsize : tuple
+        Taille du graphique.
+    """
+    # Sélection des colonnes numériques
+    X_numeric = X.select_dtypes(include=[np.number])
+    
+    corr = X_numeric.corr()
     
     plt.figure(figsize=figsize)
     # On utilise un masque pour ne voir que le triangle inférieur (plus lisible)
     mask = np.triu(np.ones_like(corr, dtype=bool))
     
     sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap='coolwarm', center=0)
-    plt.title(f"Colinéarité entre Features (excluant {target_col})")
+    plt.title("Colinéarité entre Features")
     plt.show()
 
 # Recherche de corrélations avec la Cible
-def target_correlations(df: pd.DataFrame, target: pd.Series, n_top: int = 10):
+def target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 10):
     """
     Calcule la corrélation entre toutes les features numériques et la cible.
     Retourne les n premières features les plus corrélées.
+    
+    La cible doit être numérique (encodée en amont si elle était catégorique).
+    
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame contenant les features numériques.
+    y : pd.Series
+        Series représentant la cible encodée (numérique : 0/1, etc).
+    n_top : int
+        Nombre de top features à retourner.
+    
+    Returns
+    -------
+    pd.Series
+        Corrélations absolues triées en ordre décroissant.
     """
-    # S'assurer que la cible est numérique pour le calcul (ex: diagnosis M/B -> 1/0)
-    temp_df = df.copy()
-    if target.dtype == 'object' or target.dtype == 'category':
-        # Encodage rapide si c'est une catégorie (B=0, M=1 par exemple)
-        from sklearn.preprocessing import LabelEncoder
-        temp_df[target.name] = LabelEncoder().fit_transform(target)
+    # Sélectionner uniquement les colonnes numériques de X
+    X_numeric = X.select_dtypes(include=[np.number])
     
-    correlations = temp_df.corr()[target.name].abs().sort_values(ascending=False)
+    # Créer un DataFrame temporaire avec les features numériques et la cible
+    temp_df = X_numeric.copy()
+    temp_df['__target__'] = y.values
     
-    # On retire la cible elle-même (corrélation de 1.0)
-    return correlations.drop(labels=[target_col], errors='ignore').head(n_top)
+    # Calculer les corrélations avec la cible
+    correlations = temp_df.corr()['__target__'].drop(labels=['__target__']).abs().sort_values(ascending=False)
+    
+    return correlations.head(n_top)
 
 # Affiche un barplot des n variables les plus corrélées à la cible
-def plot_target_correlations(df: pd.DataFrame, target_col: str, n_top: int = 15):
-    """Affiche un barplot des n variables les plus corrélées à la cible."""
-    # Réutilisation de ta fonction existante pour obtenir les données
-    corrs = target_correlations(df, target_col, n_top=n_top)
+def plot_target_correlations(X: pd.DataFrame, y: pd.Series, n_top: int = 15):
+    """
+    Affiche un barplot des n variables les plus corrélées à la cible.
+    
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame contenant les features.
+    y : pd.Series
+        Series représentant la cible.
+    n_top : int
+        Nombre de top features à afficher.
+    """
+    # Obtenir les corrélations avec la cible
+    corrs = target_correlations(X, y, n_top=n_top)
     
     plt.figure(figsize=(10, 8))
     sns.barplot(x=corrs.values, y=corrs.index, hue=corrs.index, palette='viridis', legend=False)
-    plt.title(f"Top {n_top} des corrélations avec la cible : {target_col}")
+    plt.title(f"Top {n_top} des corrélations avec la cible : {y.name}")
     plt.xlabel("Coefficient de corrélation (valeur absolue)")
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.show()
@@ -419,20 +473,28 @@ def plot_numeric_histograms(
     plt.show()
 
 # Affiche les diagrammes en barres des colonnes qualitatives
+
 def plot_qualitative(
-    X: pd.DataFrame,
+    X: Union[pd.DataFrame, pd.Series], # Accepte les deux types
     top_n: int = 20,
     n_cols: int = 2,
     figsize_per_col: Tuple[int, int] = (6, 4),
     figsize: Optional[Tuple[int, int]] = None,
     height_per_row: int = 4,
 ) -> None:
+    
+    # Conversion si c'est une Series
+    if isinstance(X, pd.Series):
+        # On donne un nom par défaut si la série n'en a pas
+        name = X.name if X.name else "Target"
+        X = X.to_frame(name=name)
+
     """
     Affiche des barplots pour les colonnes qualitatives.
 
     Parameters
     ----------
-    X : pd.DataFrame
+    X : pd.DataFrame ou pd.series
         Données d'entrée.
     top_n : int
         Nombre de modalités affichées par colonne.
