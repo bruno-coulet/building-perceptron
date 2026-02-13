@@ -14,3 +14,5 @@ data/
 
 2_analysis.ipynb
 analysis_utils.py
+.python-version
+pipeline.py
