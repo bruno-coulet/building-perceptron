@@ -33,8 +33,7 @@ print(f"weights générés :\n{weights}\n")
 
 
 # ========= Perceptron en POO ====================================
-class Perceptron:
-
+# class Perceptron:
     # def __init__(self, input_size=input_size, inputs=inputs, weights=weights, threshold=threshold, learning_rate=LEARNING_RATE):
 
     #     self.input_size = input_size
@@ -43,11 +42,11 @@ class Perceptron:
     #     self.threshold = threshold
     #     self.learning_rate = learning_rate
     #     self.bias = 0.0
+
+class Perceptron:
     def __init__(self, threshold=threshold):
         self.inputs = inputs
         self.threshold = threshold
-
-
 
     # Fonction d'activation
     def threshold_function(self, weighted_sum):
@@ -59,7 +58,6 @@ class Perceptron:
         else:
             print(f"Somme pondérée : {weighted_sum}\n{weighted_sum} < threshold\n")
             return 0
-
 
     # Fonction de calcul du perceptron (appelle la fonction d'activation)
     def perceptron(self):

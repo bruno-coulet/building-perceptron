@@ -347,19 +347,19 @@ def plot_feature_collinearity(df: pd.DataFrame, target_col: str, figsize: tuple 
     plt.show()
 
 # Recherche de corrélations avec la Cible
-def target_correlations(df: pd.DataFrame, target_col: str, n_top: int = 10):
+def target_correlations(df: pd.DataFrame, target: pd.Series, n_top: int = 10):
     """
     Calcule la corrélation entre toutes les features numériques et la cible.
     Retourne les n premières features les plus corrélées.
     """
     # S'assurer que la cible est numérique pour le calcul (ex: diagnosis M/B -> 1/0)
     temp_df = df.copy()
-    if temp_df[target_col].dtype == 'object' or temp_df[target_col].dtype == 'str':
+    if target.dtype == 'object' or target.dtype == 'category':
         # Encodage rapide si c'est une catégorie (B=0, M=1 par exemple)
         from sklearn.preprocessing import LabelEncoder
-        temp_df[target_col] = LabelEncoder().fit_transform(temp_df[target_col])
+        temp_df[target.name] = LabelEncoder().fit_transform(target)
     
-    correlations = temp_df.corr()[target_col].abs().sort_values(ascending=False)
+    correlations = temp_df.corr()[target.name].abs().sort_values(ascending=False)
     
     # On retire la cible elle-même (corrélation de 1.0)
     return correlations.drop(labels=[target_col], errors='ignore').head(n_top)
