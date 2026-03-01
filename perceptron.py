@@ -1,8 +1,8 @@
 import random
 
-# ======== Début - Données factices générées de manière aléatoire ================
+# ======== Données factices générées de manière aléatoire - Début ================
 try:
-    input_size = int(input("\nChoisissez la taille de l'input (entrez un chiffre) : "))
+    input_size = int(input(f"{'='*40}\n\nChoisissez la taille de l'input (entrez un chiffre) : "))
 except ValueError:
     print("\nVeuillez entrer un ENTIER, sinon cela ne fonctionnera pas.\n")
     exit()
@@ -22,10 +22,10 @@ for _ in range(input_size):
     # génère un float,distribution uniforme sur l'intervalle [0.0, 1.0[
     weights.append(random.random())
 
-print(f"\ninput générés :\n{inputs}\n")
-print(f"weights générés :\n{weights}\n")
+print(f"\n{'='*40}\n\ninput générés :\n{inputs}\n")
+print(f"weights générés :\n{weights}")
 
-# ======== FIN - Données factices générées de manière aléatoire ================
+# ======== Données factices générées de manière aléatoire - FIN ================
 
 
 
@@ -33,43 +33,47 @@ print(f"weights générés :\n{weights}\n")
 
 
 # ========= Perceptron en POO ====================================
-# class Perceptron:
-    # def __init__(self, input_size=input_size, inputs=inputs, weights=weights, threshold=threshold, learning_rate=LEARNING_RATE):
-
-    #     self.input_size = input_size
-    #     self.inputs = inputs
-    #     self.weights = weights
-    #     self.threshold = threshold
-    #     self.learning_rate = learning_rate
-    #     self.bias = 0.0
 
 class Perceptron:
-    def __init__(self, threshold=threshold):
+    def __init__(self, bias = 0.0, threshold=threshold):
+
         self.inputs = inputs
+        self.bias = bias
         self.threshold = threshold
+        self.bias = 0.0
 
     # Fonction d'activation
     def threshold_function(self, weighted_sum):
-        print(f"Seuil : {self.threshold}\n")
-        print("Calcul de la fonction d'activation :")
+        print("\nCalcul de la fonction d'activation :\n")
         if weighted_sum >= self.threshold:
+            print(f"Seuil : threshold = {self.threshold}")
             print(f"Somme pondérée : {weighted_sum}\n{weighted_sum} >= threshold\n")
             return 1
         else:
+            print(f"Seuil : threshold = {self.threshold}")
             print(f"Somme pondérée : {weighted_sum}\n{weighted_sum} < threshold\n")
             return 0
 
-    # Fonction de calcul du perceptron (appelle la fonction d'activation)
-    def perceptron(self):
 
+    # Fonction de calcul du perceptron
+    def calcul(self):
+
+        # Initialise la somme pondérée à zéro
         weighted_sum=0
-        print(f"\nLongueur du vecteur d'input : ({len(inputs)},)\n")
 
-        print("Calcul de la somme pondérée :")
+        print(f"\nLongueur du vecteur d'input : ({len(inputs)},)\n+ le biais :{self.bias}\n\n{'='*40}\n")
+
+        # Calcul de la somme pondéré
+        # --- multiplie chaque entré par le poids correspondant
+        # --- additionne tous les produits obtenus
         for x,w in zip(inputs, weights):
             weighted_sum += x * w
-        print(f"Somme pondérée = {weighted_sum}\n")
+        # --- ajoute le biais
+        weighted_sum += self.bias
 
+        print(f"Calcul de la somme pondérée (+ le biais) : {weighted_sum}\n\n{'='*40}")
+
+        # appelle la fonction d'activation pour obtenir la sortie du perceptron
         return self.threshold_function(weighted_sum)
 
 
@@ -78,6 +82,6 @@ class Perceptron:
 
 if __name__ == "__main__" :
 
-    mon_premier_truc_bidule = Perceptron()
-    sortie = mon_premier_truc_bidule.perceptron()
-    print(f"Sortie du perceptron = {str(sortie)}\n")
+    objet_perceptron = Perceptron()
+    sortie = objet_perceptron.calcul()
+    print(f"{'='*40}\n\nSortie du perceptron = {str(sortie)}\nEt BIM !\n\n{'='*40}")
