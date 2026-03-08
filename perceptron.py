@@ -36,7 +36,6 @@ print(f"weights générés :\n{weights}")
 
 class Perceptron:
     def __init__(self, bias = 0.0, threshold=threshold):
-
         self.inputs = inputs
         self.bias = bias
         self.threshold = threshold
@@ -64,11 +63,11 @@ class Perceptron:
         print(f"\nLongueur du vecteur d'input : ({len(inputs)},)\n+ le biais :{self.bias}\n\n{'='*40}\n")
 
         # Calcul de la somme pondéré
-        # --- multiplie chaque entré par le poids correspondant
-        # --- additionne tous les produits obtenus
+        # multiplie chaque entré par le poids correspondant
+        # additionne tous les produits obtenus
         for x,w in zip(inputs, weights):
             weighted_sum += x * w
-        # --- ajoute le biais
+        # ajoute le biais
         weighted_sum += self.bias
 
         print(f"Calcul de la somme pondérée (+ le biais) : {weighted_sum}\n\n{'='*40}")

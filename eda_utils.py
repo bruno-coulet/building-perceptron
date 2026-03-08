@@ -324,7 +324,6 @@ def identify_column_types(df):
 
     return numeric_columns, categorical_columns
 
-
 def preprocess_data(X, numeric_columns=None, categorical_columns=None):
     """
     Prépare les données avec scaling robuste et one-hot encoding AVANT le split train/test.
@@ -380,10 +379,61 @@ def preprocess_data(X, numeric_columns=None, categorical_columns=None):
 
     return X_preprocessed, column_transformer
 
-
-
 # # Exemple d'utilisation : Préprocessing
 # X_preprocessed, preprocessor = preprocess_data(X)
+
+
+
+# ===============================
+# EXTRAITE DU LIVRE  D'ERIC2MANGEL, NOTEBOOK1
+# ===============================
+from collections import Counter
+def get_majority_or_unique(series):
+    non_null_values = series.dropna()
+    if len(non_null_values) == 0:
+        return pd.Series(dtype='float64')
+    counter= Counter(non_null_values)
+    if len(counter) == 1:
+        # Si une seuel valeur unuique existe
+        return non_null_values.iloc[0]
+    else:
+        # Sinon, retourner la valeur la plus fréquente
+        return counter.most_common(1)[0][0]
+
+def isolate_non_numeric_values(df, colonne):
+    # Tentative de conversion de la colonne en numérique
+    df["temp_num"] = pd.to_numeric(df[colonne], errors="coerce")
+
+    # Isolation des valeurs non numériques
+    valeurs_non_numeriques = df[df["temp_num"].isna() & df[colonne].notna()]
+
+    # Suppression de la colonne temporaire
+    df.drop(columns=["temp_num"], inplace=True)
+
+    return valeurs_non_numeriques[[colonne]]
+
+
+
+def plot_completion_percentage(df):
+    # Calculer le pourcentage de complétion pour chaque colonne
+    completion_percentage = df.notnull().mean() * 100
+
+    # Créer un graphique
+    plt.figure(figsize=(6, 5))
+    completion_percentage.sort_values().plot(kind="barh", color="skyblue")
+
+    # Ajouter des labels et un titre
+    plt.xlabel("Pourcentage de complétion (%)")
+    plt.ylabel("Colonnes")
+    plt.title("Pourcentage de complétion par colonne")
+
+    # Afficher le graphique
+    plt.tight_layout()
+    plt.show()
+
+
+# plot_completion_percentage(raw)
+
 
 
 # ===============================
@@ -537,6 +587,46 @@ def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n
     plt.xlabel("Coefficient de corrélation (valeur absolue)")
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.show()
+
+def select_best_features(df, target_col, threshold=0.90):
+    """
+    Supprime les variables redondantes en ne gardant que celle 
+    qui est la plus corrélée à la cible dans chaque paire corrélée.
+    """
+    # 1. Calcul de la matrice de corrélation entre les features
+    corr_matrix = df.drop(columns=[target_col]).corr().abs()
+    # 2. Calcul de la corrélation de chaque feature avec la cible
+    target_corr = df.corr().abs()[target_col].drop(labels=[target_col])
+    
+    # 3. Identification des colonnes à supprimer
+    to_drop = set()
+    columns = corr_matrix.columns
+    
+    for i in range(len(columns)):
+        for j in range(i + 1, len(columns)):
+            col_a = columns[i]
+            col_b = columns[j]
+            
+            # Si les deux variables sont trop corrélées entre elles
+            if corr_matrix.loc[col_a, col_b] > threshold:
+                # On compare leur corrélation avec la cible
+                if target_corr[col_a] > target_corr[col_b]:
+                    to_drop.add(col_b)
+                else:
+                    to_drop.add(col_a)
+    
+
+    # 3. Sortie concise pour le notebook
+    print(f"--- Sélection de Features (Seuil: {threshold}) ---")
+    print(f"Total colonnes avant : {df.shape[1]}")
+    print(f"Colonnes supprimées  : {len(to_drop)}")
+    if to_drop:
+        print(f"Détails : {', '.join(list(to_drop))}")
+    print(f"Total colonnes après  : {df.shape[1] - len(to_drop)}")
+    print("-" * 40)
+    # 3. Sortie exaustive pour le notebook
+    # print(f"Variables supprimées ({len(to_drop)}) : {list(to_drop)}")
+    return df.drop(columns=list(to_drop))
 
 # ===============================
 # VISUALISATIONS
