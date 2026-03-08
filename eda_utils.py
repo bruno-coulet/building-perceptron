@@ -588,45 +588,124 @@ def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.show()
 
-def select_best_features(df, target_col, threshold=0.90):
+def select_best_features(
+    X: Union[pd.DataFrame, pd.Series],
+    y_or_target: Union[pd.Series, np.ndarray, str],
+    threshold: float = 0.90,
+) -> pd.DataFrame:
     """
-    Supprime les variables redondantes en ne gardant que celle 
-    qui est la plus corrélée à la cible dans chaque paire corrélée.
+    Supprime les variables redondantes en conservant, pour chaque paire
+    fortement corrélée, la variable la plus corrélée à la cible.
+
+    Cette fonction accepte deux modes d'utilisation :
+
+    1) Mode "DataFrame complet" :
+       - X = DataFrame contenant les features + la cible
+       - y_or_target = nom de la colonne cible (str)
+
+    2) Mode "X / y séparés" :
+       - X = DataFrame des features
+       - y_or_target = Series/ndarray cible
+
+    Parameters
+    ----------
+    X : Union[pd.DataFrame, pd.Series]
+        Données d'entrée (features seules ou features + cible).
+    y_or_target : Union[pd.Series, np.ndarray, str]
+        Soit le nom de la cible (str), soit la cible (Series/ndarray).
+    threshold : float
+        Seuil de corrélation absolue au-dessus duquel une paire de features
+        est considérée comme redondante.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame réduit (mêmes colonnes d'entrée moins celles supprimées).
+
+    Raises
+    ------
+    ValueError
+        Si les entrées sont invalides ou incompatibles.
     """
-    # 1. Calcul de la matrice de corrélation entre les features
-    corr_matrix = df.drop(columns=[target_col]).corr().abs()
-    # 2. Calcul de la corrélation de chaque feature avec la cible
-    target_corr = df.corr().abs()[target_col].drop(labels=[target_col])
-    
-    # 3. Identification des colonnes à supprimer
+    if isinstance(X, pd.Series):
+        X = X.to_frame()
+
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError("X doit être un DataFrame (ou une Series convertible).")
+
+    # --- Mode 1 : DataFrame complet + nom de cible
+    if isinstance(y_or_target, str):
+        target_col = y_or_target
+        if target_col not in X.columns:
+            raise ValueError(
+                f"La colonne cible '{target_col}' est introuvable dans le DataFrame fourni."
+            )
+        df_full = X.copy()
+
+    # --- Mode 2 : X + y séparés
+    else:
+        if isinstance(y_or_target, pd.Series):
+            y_series = y_or_target.copy()
+        else:
+            y_series = pd.Series(y_or_target, index=X.index, name="target")
+
+        if len(y_series) != len(X):
+            raise ValueError("X et y doivent avoir le même nombre de lignes.")
+
+        if y_series.name is None:
+            y_series.name = "target"
+
+        target_col = y_series.name
+        if target_col in X.columns:
+            target_col = f"{target_col}_target"
+            y_series = y_series.rename(target_col)
+
+        df_full = X.copy()
+        df_full[target_col] = y_series.values
+
+    # 1) Matrice de corrélation des features (sans la cible)
+    features_df = df_full.drop(columns=[target_col])
+    corr_matrix = features_df.corr(numeric_only=True).abs()
+
+    # 2) Corrélation de chaque feature numérique avec la cible
+    target_corr = df_full.corr(numeric_only=True).abs()[target_col].drop(labels=[target_col])
+
+    # Conserver uniquement les features présentes dans corr_matrix et target_corr
+    valid_features = corr_matrix.columns.intersection(target_corr.index)
+    corr_matrix = corr_matrix.loc[valid_features, valid_features]
+    target_corr = target_corr.loc[valid_features]
+
     to_drop = set()
     columns = corr_matrix.columns
-    
+
     for i in range(len(columns)):
         for j in range(i + 1, len(columns)):
             col_a = columns[i]
             col_b = columns[j]
-            
-            # Si les deux variables sont trop corrélées entre elles
             if corr_matrix.loc[col_a, col_b] > threshold:
-                # On compare leur corrélation avec la cible
                 if target_corr[col_a] > target_corr[col_b]:
                     to_drop.add(col_b)
                 else:
                     to_drop.add(col_a)
-    
 
-    # 3. Sortie concise pour le notebook
     print(f"--- Sélection de Features (Seuil: {threshold}) ---")
-    print(f"Total colonnes avant : {df.shape[1]}")
+    print(f"Total colonnes avant : {features_df.shape[1]}")
     print(f"Colonnes supprimées  : {len(to_drop)}")
     if to_drop:
-        print(f"Détails : {', '.join(list(to_drop))}")
-    print(f"Total colonnes après  : {df.shape[1] - len(to_drop)}")
+        print(f"Détails : {', '.join(sorted(to_drop))}")
+    print(f"Total colonnes après : {features_df.shape[1] - len(to_drop)}")
     print("-" * 40)
-    # 3. Sortie exaustive pour le notebook
-    # print(f"Variables supprimées ({len(to_drop)}) : {list(to_drop)}")
-    return df.drop(columns=list(to_drop))
+
+    reduced_features = features_df.drop(columns=list(to_drop), errors="ignore")
+
+    # En mode DataFrame complet, on remet la cible dans la sortie
+    if isinstance(y_or_target, str):
+        reduced_df = reduced_features.copy()
+        reduced_df[target_col] = df_full[target_col]
+        return reduced_df
+
+    # En mode X/y séparés, on renvoie uniquement les features réduites
+    return reduced_features
 
 # ===============================
 # VISUALISATIONS

@@ -1,3 +1,5 @@
+import numpy as np
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
@@ -21,13 +23,20 @@ def eval_classification(algo, param_grid, X_train, y_train, X_test, y_test,
     : return : un dict contenant les meilleures paramètres, 
     accuracy, precision, recall, f1, confusion_matrix et classification report
     """
-    # Encodage des étiquettes
-    label_encoder = LabelEncoder()
-    y_train_encoded = label_encoder.fit_transform(y_train)
-    y_test_encoded = label_encoder.transform(y_test)
+    # Si y_train est déjà numérique, on définit les noms de classes manuellement
+    if np.issubdtype(y_train.dtype, np.number):
+        y_train_encoded = y_train
+        y_test_encoded = y_test
+        # On crée des noms de catégories sous forme de texte pour le rapport
+        unique_categories = [str(c) for c in np.unique(y_train)]
+    else:
+        # Encodage des étiquettes
+        label_encoder = LabelEncoder()
+        y_train_encoded = label_encoder.fit_transform(y_train)
+        y_test_encoded = label_encoder.transform(y_test)
 
-    # Récupération des catégories originales
-    unique_categories = label_encoder.classes_ 
+        # Récupération des catégories originales
+        unique_categories = label_encoder.classes_ 
 
     # Entraine sans optimisation d'hyperparamètres si param_grid est vide
     if param_grid is None:
