@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 # ======== Données factices générées de manière aléatoire - Début ================
 try:
@@ -34,7 +35,7 @@ print(f"weights générés :\n{weights}")
 
 # ========= Perceptron en POO ====================================
 
-class Perceptron:
+class DemoPerceptron:
     def __init__(self, bias = 0.0, threshold=threshold):
         self.inputs = inputs
         self.bias = bias
@@ -76,11 +77,8 @@ class Perceptron:
         return self.threshold_function(weighted_sum)
 
 
-
-
-
 if __name__ == "__main__" :
 
-    objet_perceptron = Perceptron()
+    objet_perceptron = DemoPerceptron()
     sortie = objet_perceptron.calcul()
     print(f"{'='*40}\n\nSortie du perceptron = {str(sortie)}\nEt BIM !\n\n{'='*40}")

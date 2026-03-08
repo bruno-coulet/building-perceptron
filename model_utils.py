@@ -111,3 +111,43 @@ def eval_classification(algo, param_grid, X_train, y_train, X_test, y_test,
         "cv_results": cv_results,
         "best_model": best_model
     }
+
+
+# ======== Perceptron avec learning rate et itérations - Début ================
+# La fonction np.where agit exactement comme ta threshold_function
+
+
+from sklearn.base import BaseEstimator, ClassifierMixin
+# On hérite de BaseEstimator (pour GridSearchCV) et ClassifierMixin (pour le score)
+class Perceptron(BaseEstimator, ClassifierMixin):
+    def __init__(self, threshold=0.5, learning_rate=0.01, n_iterations=100):
+        # IMPORTANT : Les noms des arguments doivent être identiques 
+        # aux noms des attributs self.xxx
+        self.threshold = threshold
+        self.learning_rate = learning_rate
+        self.n_iterations = n_iterations
+        self.weights = None
+        self.bias = 0.0
+
+    def fit(self, X, y):
+        X = np.array(X)
+        y = np.array(y)
+        
+        self.weights = np.zeros(X.shape[1])
+        self.bias = 0.0
+        
+        for _ in range(self.n_iterations):
+            for i in range(len(y)):
+                prediction = self.predict(X[i].reshape(1, -1))[0]
+                error = y[i] - prediction
+                
+                if error != 0:
+                    # Utilisation de self.learning_rate (nom exact du init)
+                    self.weights += self.learning_rate * error * X[i]
+                    self.bias += self.learning_rate * error
+        return self # Toujours retourner self dans fit()
+
+    def predict(self, X):
+        X = np.array(X)
+        weighted_sum = np.dot(X, self.weights) + self.bias
+        return np.where(weighted_sum >= self.threshold, 1, 0)
