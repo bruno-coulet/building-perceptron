@@ -3,8 +3,11 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 import seaborn as sns, matplotlib.pyplot as plt
+
+
 
 
 def eval_classification(algo, param_grid, X_train, y_train, X_test, y_test, 
@@ -114,15 +117,12 @@ def eval_classification(algo, param_grid, X_train, y_train, X_test, y_test,
 
 
 # ======== Perceptron avec learning rate et itérations - Début ================
-# La fonction np.where agit exactement comme ta threshold_function
 
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-# On hérite de BaseEstimator (pour GridSearchCV) et ClassifierMixin (pour le score)
 class Perceptron(BaseEstimator, ClassifierMixin):
+    # Hérite de BaseEstimator (pour GridSearchCV) et ClassifierMixin (pour le score)
+
     def __init__(self, threshold=0.5, learning_rate=0.01, n_iterations=100):
-        # IMPORTANT : Les noms des arguments doivent être identiques 
-        # aux noms des attributs self.xxx
         self.threshold = threshold
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
@@ -142,12 +142,14 @@ class Perceptron(BaseEstimator, ClassifierMixin):
                 error = y[i] - prediction
                 
                 if error != 0:
-                    # Utilisation de self.learning_rate (nom exact du init)
                     self.weights += self.learning_rate * error * X[i]
                     self.bias += self.learning_rate * error
-        return self # Toujours retourner self dans fit()
+                    
+        # Toujours retourner self dans fit()
+        return self
 
     def predict(self, X):
         X = np.array(X)
         weighted_sum = np.dot(X, self.weights) + self.bias
+        # La fonction np.where agit comme un threshold
         return np.where(weighted_sum >= self.threshold, 1, 0)
