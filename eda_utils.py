@@ -707,7 +707,30 @@ def select_best_features(
     # En mode X/y séparés, on renvoie uniquement les features réduites
     return reduced_features
 
-# ===============================
+def scree_plot(pca):
+    """Affiche le graphique de l'éboulis des valeurs propres (Scree Plot)"""
+    n_components = len(pca.explained_variance_ratio_)
+    ind = np.arange(n_components)
+    vals = pca.explained_variance_ratio_
+
+    plt.figure(figsize=(10, 6))
+    ax = plt.subplot(111)
+    
+    # Barres pour la variance expliquée par chaque composante
+    ax.bar(ind, vals)
+    
+    # Ligne pour la variance cumulée
+    cumulative_variance = np.cumsum(vals)
+    ax.plot(ind, cumulative_variance, marker='o', color='red', label="Variance cumulée")
+    
+    ax.set_xlabel("Composante Principale")
+    ax.set_ylabel("Variance expliquée (%)")
+    plt.title("Scree Plot (Éboulis des valeurs propres)")
+    plt.legend()
+    plt.show()
+
+
+# =================
 # VISUALISATIONS
 # ===============================
 

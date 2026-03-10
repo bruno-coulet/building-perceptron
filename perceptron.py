@@ -31,10 +31,7 @@ print(f"weights générés :\n{weights}")
 
 
 
-
-
 # ========= Perceptron en POO ====================================
-
 class DemoPerceptron:
     def __init__(self, bias = 0.0, threshold=threshold):
         self.inputs = inputs
@@ -75,6 +72,7 @@ class DemoPerceptron:
 
         # appelle la fonction d'activation pour obtenir la sortie du perceptron
         return self.threshold_function(weighted_sum)
+
 
 
 if __name__ == "__main__" :
