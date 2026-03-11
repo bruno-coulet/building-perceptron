@@ -707,27 +707,32 @@ def select_best_features(
     # En mode X/y séparés, on renvoie uniquement les features réduites
     return reduced_features
 
-def scree_plot(pca):
-    """Affiche le graphique de l'éboulis des valeurs propres (Scree Plot)"""
-    n_components = len(pca.explained_variance_ratio_)
-    ind = np.arange(n_components)
-    vals = pca.explained_variance_ratio_
+def scree_plot(pca, figsize=(10, 6)):
 
-    plt.figure(figsize=(10, 6))
-    ax = plt.subplot(111)
+    # calcul de la variance epliquée et cumulée
+    explained_variance = pca.explained_variance_ratio_
+    cumulative_variance = np.cumsum(explained_variance)
+
+    plt.figure(figsize=figsize)
+    plt.bar(range(1, len(explained_variance) + 1),
+            explained_variance, 
+            alpha=0.5, align='center',
+            label='Variance expliquée par composante', 
+            color='#439cc8')
     
-    # Barres pour la variance expliquée par chaque composante
-    ax.bar(ind, vals)
-    
-    # Ligne pour la variance cumulée
-    cumulative_variance = np.cumsum(vals)
-    ax.plot(ind, cumulative_variance, marker='o', color='red', label="Variance cumulée")
-    
-    ax.set_xlabel("Composante Principale")
-    ax.set_ylabel("Variance expliquée (%)")
-    plt.title("Scree Plot (Éboulis des valeurs propres)")
-    plt.legend()
+    # courbe de la variance expliquée cumulative
+    plt.plot(range(1, len(cumulative_variance) + 1),
+             cumulative_variance, 
+             marker='o', linestyle='--',
+             color='darkorange', 
+             label='Variance expliquée cumulative')
+    plt.xlabel('Composantes principales')
+    plt.ylabel('Variance expliquée')
+    plt.title('Ebouli des valeurs propres\n')
+    plt.legend(loc='best')
+    plt.grid(True, alpha=0.3)
     plt.show()
+
 
 
 # =================
