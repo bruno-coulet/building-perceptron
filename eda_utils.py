@@ -707,6 +707,10 @@ def select_best_features(
     # En mode X/y séparés, on renvoie uniquement les features réduites
     return reduced_features
 
+
+# =================
+# PCA p.370
+# ===============================
 def scree_plot(pca, figsize=(10, 6)):
 
     # calcul de la variance epliquée et cumulée
@@ -733,8 +737,62 @@ def scree_plot(pca, figsize=(10, 6)):
     plt.grid(True, alpha=0.3)
     plt.show()
 
+def draw_correlation_circle(ax):
+    ax.add_artist(plt.Circle((0, 0), 1, 
+                            color='gray', 
+                            fill=False, 
+                            linestyle='-', 
+                            alpha=0.5))
 
+def plot_correlation_circle(pca, components,feature_names):
+    arrow_size=0.05
+    fig, ax = plt.subplots(figsize=(8, 8))
+    draw_correlation_circle(ax)
 
+    for i, feature in enumerate(feature_names):
+        x, y = pca.components_[components, i]
+        norm = np.linalg.norm([x, y])
+        if norm > 0:
+            x_base = x - x /norm * arrow_size
+            y_base = y - y /norm * arrow_size  # Normaliser pour que les flèches soient à l'intérieur du cercle
+            ax.plot(
+                [0, x_base],
+                [0, y_base],
+                color='blue',
+                alpha=0.7
+            )
+            ax.quiver(
+                x_base,
+                y_base,
+                x / norm * arrow_size,
+                y / norm * arrow_size,
+                angles='xy',
+                scale_units='xy',
+                scale=1,
+                color='blue',
+                alpha=0.7
+            )
+
+        ax.text(x * 1.05, y * 1.05, feature, color='black', ha='center', va='center')
+
+    var_ratio = pca.explained_variance_ratio_[components] * 100
+
+    x_label = f'\nComp. {components[0]+1} ({var_ratio[0]:.2f}%)'
+    y_label = f'\nComp. {components[1]+1} ({var_ratio[1]:.2f}%)'
+    title = (f'Cercle des correlations\n'
+             f'Variance exliquée : {var_ratio.sum():.2f}%\n')
+    
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.grid()
+    ax.axhline(0, color='#555', linewidth=1)
+    ax.axvline(0, color='#555', linewidth=1)
+    ax.set_xlim([-1, 1])
+    ax.set_ylim([-1, 1])
+    ax.set_aspect('equal', adjustable='box')
+    plt.show()
+                 
 # =================
 # VISUALISATIONS
 # ===============================
