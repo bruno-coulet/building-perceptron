@@ -8,7 +8,7 @@ Ce projet s'inscrit dans le cadre de l'apprentissage de l'intelligence artificie
 
 1. **Comprendre le fonctionnement fondamental d'un perceptron** à travers une implémentation simple et pédagogique
 2. **Développer un perceptron compatible avec Scikit-learn** pour résoudre un problème de classification médicale
-3. **Réaliser une analyse exploratoire complète** (EDA) des données 
+3. **Réaliser une analyse exploratoire complète** (EDA) des données
 
 4. **Évaluer et comparer les performances** du modèle personnalisé
 
@@ -22,13 +22,29 @@ Le projet utilise le **Breast Cancer Wisconsin (Diagnostic) Dataset** pour class
 **Dataset** (`raw_data/bcw_data.csv`)
 https://drive.google.com/file/d/1itXdRo4WJuhqCjtVX4WGvT327WWp4LB7/view
 
-### Description
+### [Description](https://drive.google.com/file/d/1o3gJEh-_frY-ZgEYgl1fETiKD0rcNofU/view)
 - **Nombre de caractéristiques** : 30 features numériques calculées à partir d'images de masses cellulaires
 - **Variable cible** : `diagnosis` (M = Maligne, B = Bénigne)
 - **Types de features** :
   - Mesures moyennes (_mean) : rayon, texture, périmètre, aire, etc.
   - Erreurs standard (_se) : variabilité des mesures
   - Valeurs maximales (_worst) : cas les plus extrêmes
+
+  1) ID number
+2) Diagnosis (M = malignant, B = benign)
+3-32)
+
+Ten real-valued features are computed for each cell nucleus:
+	a) radius (mean of distances from center to points on the perimeter)
+	b) texture (standard deviation of gray-scale values)
+	c) perimeter
+	d) area
+	e) smoothness (local variation in radius lengths)
+	f) compactness (perimeter^2 / area - 1.0)
+	g) concavity (severity of concave portions of the contour)
+	h) concave points (number of concave portions of the contour)
+	i) symmetry
+	j) fractal dimension ("coastline approximation" - 1)
 
 ### Caractéristiques principales
 ```
@@ -126,7 +142,7 @@ building-perceptron/
 - Visualisation pas à pas du fonctionnement
 
 #### `model_utils.py` - Outils de modélisation
-- **Classe `Perceptron`** : 
+- **Classe `Perceptron`** :
   - Compatible avec l'API Scikit-learn (hérite de `BaseEstimator` et `ClassifierMixin`)
   - Paramètres ajustables : `threshold`, `learning_rate`, `n_iterations`
   - Méthodes `fit()`, `predict()` standard
@@ -233,7 +249,7 @@ Le perceptron, bien que simpliste, illustre parfaitement les concepts clés du m
 
 ---
 
-**Auteur** : Bruno Coulet  
-**Date** : Février 2026  
-**Version** : 1.0.0  
+**Auteur** : Bruno Coulet
+**Date** : Février 2026
+**Version** : 1.0.0
 **Contexte** : Projet pédagogique - Formation IA en alternance (Marseille)
