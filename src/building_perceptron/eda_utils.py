@@ -925,7 +925,7 @@ def plot_missing_bar(
 # Trace des scatter plots de variables vs la target
 def plot_scatter_vs_target(
     X: pd.DataFrame,
-    y: pd.Series,
+    y: Union[pd.Series, np.ndarray],
     cols: Iterable[str],
     transform_y: Optional[str] = None,
     figsize: Tuple[int, int] = (15, 10),
@@ -952,10 +952,14 @@ def plot_scatter_vs_target(
     s : int
         Taille des points.
     """
+    # Extraction uniforme sous forme de ndarray 1D
+
+    y_raw = y.to_numpy() if isinstance(y, pd.Series) else np.asarray(y)
+
     if transform_y == "log1p":
-        y_vals = np.log1p(y.values)
+        y_vals = np.log1p(y_raw)
     else:
-        y_vals = y.values
+        y_vals = y_raw
 
     cols = list(cols)
     if not cols:
