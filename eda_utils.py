@@ -86,7 +86,7 @@ def missing_like_columns(df: pd.DataFrame) -> list:
 def duplicate_rows(df: pd.DataFrame, subset: Optional[List[str]] = None, keep: str = 'first') -> pd.DataFrame:
     """
     Retourne les lignes en doublon dans le DataFrame.
-    
+
     Parameters
     ----------
     df : pd.DataFrame
@@ -98,7 +98,7 @@ def duplicate_rows(df: pd.DataFrame, subset: Optional[List[str]] = None, keep: s
         'first' : marque les doublons sauf la première occurrence
         'last' : marque les doublons sauf la dernière occurrence
         False : marque toutes les occurrences comme doublons
-    
+
     Returns
     -------
     pd.DataFrame
@@ -110,7 +110,7 @@ def duplicate_rows(df: pd.DataFrame, subset: Optional[List[str]] = None, keep: s
 def count_duplicates(df: pd.DataFrame, subset: Optional[List[str]] = None) -> int:
     """
     Retourne le nombre total de lignes en doublon (hors première occurrence).
-    
+
     Parameters
     ----------
     df : pd.DataFrame
@@ -118,7 +118,7 @@ def count_duplicates(df: pd.DataFrame, subset: Optional[List[str]] = None) -> in
     subset : list | None
         Liste des colonnes à considérer pour détecter les doublons.
         Si None, toutes les colonnes sont utilisées.
-    
+
     Returns
     -------
     int
@@ -174,13 +174,13 @@ def lower_columns(df: pd.DataFrame, cols: list) -> pd.DataFrame:
     """
     # Colonnes existantes dans le DataFrame
     existing_cols = [c for c in cols if c in df.columns]
-    
+
     # Filtrer pour ne garder que les colonnes string/object
     string_cols = [c for c in existing_cols if pd.api.types.is_string_dtype(df[c])]
-    
+
     for col in string_cols:
         df[col] = df[col].str.lower()
-    
+
     return df
 
 
@@ -242,11 +242,11 @@ def normalize_string(text):
     Convertit une chaîne en minuscules et supprime les accents/caractères diacritiques,
     tout en protégeant les booléens (True/False) et les NaN.
     """
-    
+
     # 1. Protection contre les NaN et None
     if pd.isna(text) or text is None:
         return text
-    
+
     text_str = str(text)
 
     # 2. **PROTECTION BOOLÉENNE (NOUVEAU)**
@@ -255,31 +255,31 @@ def normalize_string(text):
         # On peut soit laisser la chaîne telle quelle, soit la convertir en booléen Python natif.
         # Nous la laissons en chaîne pour le moment, mais non modifiée.
         return text
-    
+
     # 3. Traitement standard du texte (minuscules et accents)
-    
+
     # Convertir en minuscules (UNIQUEMENT les chaînes qui ne sont pas True/False)
-    text_str_lower = text_str.lower() 
+    text_str_lower = text_str.lower()
 
     # Décomposer les caractères (NFD)
     normalized = unicodedata.normalize('NFD', text_str_lower)
-    
+
     # Retirer les marques d'accent
     text_no_accents = re.sub(r'[\u0300-\u036f]', '', normalized)
-    
+
     return text_no_accents
 
 
 # Normalise toutes les colonnes texte d'un DataFrame
 def normalize_all_text_columns(df):
     string_cols = df.select_dtypes(include=['object', 'string']).columns.tolist()
-    
+
     print(f"Normalisation des colonnes de texte : {string_cols}")
 
     for col in string_cols:
         # Utiliser la fonction sécurisée
         df[col] = df[col].apply(normalize_string)
-        
+
     return df
 
 
@@ -469,14 +469,14 @@ def select_existing_features(features: Iterable[str], columns: Iterable[str]) ->
 def feature_collinearity(X: pd.DataFrame, threshold: float = 0.8):
     """
     Identifie les paires de features fortement corrélées entre elles (colinéarité).
-    
+
     Parameters
     ----------
     X : pd.DataFrame
         DataFrame contenant les features numériques.
     threshold : float
         Seuil minimum de corrélation absolue à considérer comme colinéaire.
-    
+
     Returns
     -------
     list
@@ -484,27 +484,27 @@ def feature_collinearity(X: pd.DataFrame, threshold: float = 0.8):
     """
     # Sélectionner uniquement les colonnes numériques
     X_numeric = X.select_dtypes(include=[np.number])
-    
+
     corr_matrix = X_numeric.corr().abs()
-    
+
     # On ne récupère que la partie supérieure de la matrice pour éviter les doublons (A/B et B/A)
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    
+
     # On filtre par le seuil
     collinear_features = [
-        (column, row, upper.loc[row, column]) 
-        for column in upper.columns 
-        for row in upper.index 
+        (column, row, upper.loc[row, column])
+        for column in upper.columns
+        for row in upper.index
         if upper.loc[row, column] > threshold
     ]
-    
+
     return sorted(collinear_features, key=lambda x: x[2], reverse=True)
 
 # Affiche une heatmap des corrélations entre features
 def plot_feature_collinearity(X: pd.DataFrame, figsize: tuple = (12, 10)):
     """
     Affiche la heatmap des corrélations entre features (colinéarité).
-    
+
     Parameters
     ----------
     X : pd.DataFrame
@@ -514,13 +514,13 @@ def plot_feature_collinearity(X: pd.DataFrame, figsize: tuple = (12, 10)):
     """
     # Sélection des colonnes numériques
     X_numeric = X.select_dtypes(include=[np.number])
-    
+
     corr = X_numeric.corr()
-    
+
     plt.figure(figsize=figsize)
     # On utilise un masque pour ne voir que le triangle inférieur (plus lisible)
     mask = np.triu(np.ones_like(corr, dtype=bool))
-    
+
     sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap='coolwarm', center=0)
     plt.title("Colinéarité entre Features")
     plt.show()
@@ -530,9 +530,9 @@ def target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top:
     """
     Calcule la corrélation entre toutes les features numériques et la cible.
     Retourne les n premières features les plus corrélées.
-    
+
     La cible doit être numérique (encodée en amont si elle était catégorique).
-    
+
     Parameters
     ----------
     X : pd.DataFrame
@@ -541,7 +541,7 @@ def target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top:
         Series ou array représentant la cible encodée (numérique : 0/1, etc).
     n_top : int
         Nombre de top features à retourner.
-    
+
     Returns
     -------
     pd.Series
@@ -549,23 +549,23 @@ def target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top:
     """
     # Sélectionner uniquement les colonnes numériques de X
     X_numeric = X.select_dtypes(include=[np.number])
-    
+
     # Créer un DataFrame temporaire avec les features numériques et la cible
     temp_df = X_numeric.copy()
     # Accepter à la fois Series et ndarray
     target_values = y.values if isinstance(y, pd.Series) else y
     temp_df['__target__'] = target_values
-    
+
     # Calculer les corrélations avec la cible
     correlations = temp_df.corr()['__target__'].drop(labels=['__target__']).abs().sort_values(ascending=False)
-    
+
     return correlations.head(n_top)
 
 # Affiche un barplot des n variables les plus corrélées à la cible
 def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n_top: int = 15):
     """
     Affiche un barplot des n variables les plus corrélées à la cible.
-    
+
     Parameters
     ----------
     X : pd.DataFrame
@@ -577,10 +577,10 @@ def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n
     """
     # Obtenir les corrélations avec la cible
     corrs = target_correlations(X, y, n_top=n_top)
-    
+
     # Déterminer le nom de la cible
     target_name = y.name if isinstance(y, pd.Series) else "Cible"
-    
+
     plt.figure(figsize=(10, 8))
     sns.barplot(x=corrs.values, y=corrs.index, hue=corrs.index, palette='viridis', legend=False)
     plt.title(f"Top {n_top} des corrélations avec la cible : {target_name}")
@@ -719,16 +719,16 @@ def scree_plot(pca, figsize=(10, 6)):
 
     plt.figure(figsize=figsize)
     plt.bar(range(1, len(explained_variance) + 1),
-            explained_variance, 
+            explained_variance,
             alpha=0.5, align='center',
-            label='Variance expliquée par composante', 
+            label='Variance expliquée par composante',
             color='#439cc8')
-    
+
     # courbe de la variance expliquée cumulative
     plt.plot(range(1, len(cumulative_variance) + 1),
-             cumulative_variance, 
+             cumulative_variance,
              marker='o', linestyle='--',
-             color='darkorange', 
+             color='darkorange',
              label='Variance expliquée cumulative')
     plt.xlabel('Composantes principales')
     plt.ylabel('Variance expliquée')
@@ -738,10 +738,10 @@ def scree_plot(pca, figsize=(10, 6)):
     plt.show()
 
 def draw_correlation_circle(ax):
-    ax.add_artist(plt.Circle((0, 0), 1, 
-                            color='gray', 
-                            fill=False, 
-                            linestyle='-', 
+    ax.add_artist(plt.Circle((0, 0), 1,
+                            color='gray',
+                            fill=False,
+                            linestyle='-',
                             alpha=0.5))
 
 def plot_correlation_circle(pca, components,feature_names):
@@ -781,7 +781,7 @@ def plot_correlation_circle(pca, components,feature_names):
     y_label = f'\nComp. {components[1]+1} ({var_ratio[1]:.2f}%)'
     title = (f'Cercle des correlations\n'
              f'Variance exliquée : {var_ratio.sum():.2f}%\n')
-    
+
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
@@ -792,7 +792,7 @@ def plot_correlation_circle(pca, components,feature_names):
     ax.set_ylim([-1, 1])
     ax.set_aspect('equal', adjustable='box')
     plt.show()
-                 
+
 # =================
 # VISUALISATIONS
 # ===============================
@@ -814,7 +814,7 @@ def plot_numeric_histograms(
     bins : int
         Nombre de bins pour les histogrammes.
     n_cols : int
-        Nombre de graphes par ligne.
+        Nombre de graphes par ligne (nombre decolonnes).
     figsize_per_col : tuple
         Taille d'un subplot (largeur, hauteur).
     """
@@ -844,7 +844,7 @@ def plot_qualitative(
     figsize: Optional[Tuple[int, int]] = None,
     height_per_row: int = 4,
 ) -> None:
-    
+
     # Conversion si c'est une Series
     if isinstance(X, pd.Series):
         # On donne un nom par défaut si la série n'en a pas
@@ -875,7 +875,7 @@ def plot_qualitative(
         figsize = (n_cols * figsize_per_col[0], n_rows * height_per_row)
 
     plt.figure(figsize=figsize)
-    
+
 
     for i, col in enumerate(cat_cols, 1):
         plt.subplot(n_rows, n_cols, i)
@@ -1242,7 +1242,7 @@ def evaluate_model(
     """
     Entraine un modele avec GridSearchCV ou RandomizedSearchCV et affiche les résultats
     prédit les valeurs de test et calcule les métriques
-    
+
     :parma algo: instance de l'algorithme à utiliser
     :param param_grid: dictionnaire des paramètres à testerNone si vide)
     :param X_train: features d'entrainement
@@ -1266,18 +1266,18 @@ def evaluate_model(
     else:
         # Choisir le type de recherche d'hyperparamètres
         if search_type == 'grid':
-            search = GridSearchCV(algo, 
-                                  param_grid, 
-                                  cv=cv, 
+            search = GridSearchCV(algo,
+                                  param_grid,
+                                  cv=cv,
                                   scoring=scoring)
         elif search_type == 'random':
-            search = RandomizedSearchCV(algo, 
-                                        param_grid, 
-                                        cv=cv, 
+            search = RandomizedSearchCV(algo,
+                                        param_grid,
+                                        cv=cv,
                                         scoring=scoring)
         else:
             raise ValueError("search_type doit être 'grid' ou 'random'")
-        
+
         # Entrainement et optimisation
         search.fit(X_train, y_train)
         best_model = search.best_estimator_
@@ -1316,7 +1316,7 @@ def evaluate_model(
 if __name__ == "__main__":
     # --------- Chargement des données ---------
     df = pd.read_csv("raw_data/houses_Madrid.csv", index_col=1)
-    
+
     # --------- Détection des problèmes ---------
     print("=" * 60)
     print("DIAGNOSTIC DES DONNÉES")
@@ -1329,16 +1329,16 @@ if __name__ == "__main__":
     print(f"Colonnes avec >50% de NaN: {high_na_columns(df, threshold=0.5)}")
     print(f"Colonnes catégoriques haute cardinalité (>2): {high_cardinality_columns(df, max_modalities=2)}")
     print(f"Colonnes avec valeurs 'nulles' implicites: {missing_like_columns(df)}")
-    
+
     # --------- Analyse du remplissage ---------
     print("\n" + "=" * 60)
     print("TAUX DE REMPLISSAGE PAR COLONNE")
     print("=" * 60)
     print(fill_rate(df))
-    
+
     # --------- Normalisation du texte (optionnel) ---------
     # df_normalized = normalize_all_text_columns(df.copy())
-    
+
     # --------- Visualisations ---------
     # plot_numeric_histograms(df, bins=40, n_cols=3)
     # plot_qualitative(df, top_n=20, n_cols=2)
