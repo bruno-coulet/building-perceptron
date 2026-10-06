@@ -583,7 +583,7 @@ def plot_target_correlations(X: pd.DataFrame, y: Union[pd.Series, np.ndarray], n
 
     plt.figure(figsize=(10, 8))
     sns.barplot(x=corrs.values, y=corrs.index, hue=corrs.index, palette='viridis', legend=False)
-    plt.title(f"Top {n_top} des corrélations avec la cible : {target_name}")
+    plt.title(f"Top {n_top} corelation with the target : {target_name}")
     plt.xlabel("Coefficient de corrélation (valeur absolue)")
     plt.grid(axis='x', linestyle='--', alpha=0.7)
     plt.show()
@@ -638,7 +638,7 @@ def select_best_features(
         target_col = y_or_target
         if target_col not in X.columns:
             raise ValueError(
-                f"La colonne cible '{target_col}' est introuvable dans le DataFrame fourni."
+                f"target '{target_col}' cannot be found in supplied DataFrame."
             )
         df_full = X.copy()
 
@@ -650,7 +650,7 @@ def select_best_features(
             y_series = pd.Series(y_or_target, index=X.index, name="target")
 
         if len(y_series) != len(X):
-            raise ValueError("X et y doivent avoir le même nombre de lignes.")
+            raise ValueError("X and y must have the same number of rows.")
 
         if y_series.name is None:
             y_series.name = "target"
@@ -688,12 +688,12 @@ def select_best_features(
                 else:
                     to_drop.add(col_a)
 
-    print(f"--- Sélection de Features (Seuil: {threshold}) ---")
-    print(f"Total colonnes avant : {features_df.shape[1]}")
-    print(f"Colonnes supprimées  : {len(to_drop)}")
+    print(f"--- Features selection (threshold: {threshold}) ---")
+    print(f"Total features before : {features_df.shape[1]}")
+    print(f"Deleted Features  : {len(to_drop)}")
     if to_drop:
-        print(f"Détails : {', '.join(sorted(to_drop))}")
-    print(f"Total colonnes après : {features_df.shape[1] - len(to_drop)}")
+        print(f"Dropped features : {', '.join(sorted(to_drop))}")
+    print(f"remaining features : {features_df.shape[1] - len(to_drop)}")
     print("-" * 40)
 
     reduced_features = features_df.drop(columns=list(to_drop), errors="ignore")
