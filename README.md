@@ -1,70 +1,89 @@
 # building-perceptron
 
-Projet pédagogique d'implémentation d'un perceptron pour la classification de tumeurs du sein.
 
-## Contexte du projet
-
-Ce projet s'inscrit dans le cadre de l'apprentissage de l'intelligence artificielle et du machine learning. L'objectif est de :
-
-1. **Comprendre le fonctionnement fondamental d'un perceptron** à travers une implémentation simple et pédagogique
-2. **Développer un perceptron compatible avec Scikit-learn** pour résoudre un problème de classification médicale
-3. **Réaliser une analyse exploratoire complète** (EDA) des données
-
-4. **Évaluer et comparer les performances** du modèle personnalisé
+Educational project on implementing a perceptron for breast tumor classification.
 
 
-## Données
+## Project context
+
+This project is part of first the year program of the [Master of science Data /AI degree](https://laplateforme.io/mastere/intelligence-artificielle/) delivered by la [Plateforme](https://laplateforme.io/)<br>
+**Duration** : 5 days<br>
+**Team** : 1 person<br>
+
+This project is part of the process of learning about artificial intelligence and machine learning<br>
+
+The objectives are to:
+1. **Understand how a perceptron works** through a simple, educational implementation
+2. **Develop a Scikit-learn-compatible perceptron** to solve a medical classification problem
+3. **Conduct a comprehensive exploratory data analysis** (EDA)
+4. **Evaluate and compare the performance** of the custom model
+
+## Data
 
 ### Source
 
-Le projet utilise le **Breast Cancer Wisconsin (Diagnostic) Dataset** pour classifier des tumeurs comme bénignes ou malignes.
+**Breast Cancer Wisconsin (Diagnostic) Dataset** to classify tumors as benign or malignant<br>
 
 **Dataset** (`raw_data/bcw_data.csv`)
 https://drive.google.com/file/d/1itXdRo4WJuhqCjtVX4WGvT327WWp4LB7/view
 
 ### [Description](https://drive.google.com/file/d/1o3gJEh-_frY-ZgEYgl1fETiKD0rcNofU/view)
-- **Nombre de caractéristiques** : 30 features numériques calculées à partir d'images de masses cellulaires
-- **Variable cible** : `diagnosis` (M = Maligne, B = Bénigne)
-- **Types de features** :
-  - Mesures moyennes (_mean) : rayon, texture, périmètre, aire, etc.
-  - Erreurs standard (_se) : variabilité des mesures
-  - Valeurs maximales (_worst) : cas les plus extrêmes
 
-  1) ID number
-2) Diagnosis (M = malignant, B = benign)
-3-32)
 
-Ten real-valued features are computed for each cell nucleus:
-	a) radius (mean of distances from center to points on the perimeter)
-	b) texture (standard deviation of gray-scale values)
-	c) perimeter
-	d) area
-	e) smoothness (local variation in radius lengths)
-	f) compactness (perimeter^2 / area - 1.0)
-	g) concavity (severity of concave portions of the contour)
-	h) concave points (number of concave portions of the contour)
-	i) symmetry
-	j) fractal dimension ("coastline approximation" - 1)
+- ID number
+- Diagnosis : M = malignant (3), B = benign(32)
 
-### Caractéristiques principales
+Ten real-valued features are computed for each cell nucleus:<br>
+- radius (mean of distances from center to points on the perimeter)
+- texture (standard deviation of gray-scale values)
+- perimeter
+- area
+- smoothness (local variation in radius lengths)
+- compactness (perimeter^2 / area - 1.0)
+- concavity (severity of concave portions of the contour)
+- concave points (number of concave portions of the contour)
+- symmetry
+- fractal dimension ("coastline approximation" - 1)
+
+## Projet structure
+
 ```
-- radius_mean : rayon moyen des cellules
-- texture_mean : écart-type des valeurs de niveau de gris
-- perimeter_mean : périmètre moyen
-- area_mean : aire moyenne
-- smoothness_mean : variation locale des longueurs de rayon
-- compactness_mean : (périmètre² / aire) - 1.0
-- concavity_mean : sévérité des portions concaves du contour
-- concave points_mean : nombre de portions concaves du contour
-- symmetry_mean : symétrie
-- fractal_dimension_mean : "approximation de côte" - 1
+building-perceptron/
+├── data/
+│   └── raw_data.csv             # Dataset Breast Cancer Wisconsin
+│   └── clean_data.csv
+│   └── processed_data.csv
+├── src/
+│   └── building_perceptron/
+│       └──
+│       └── config.py            # constants, paths
+│       └── perceptron.py        # simple pedagogical implementation
+│       └── model_utils.py       # sklearn Perceptron + evaluation functions
+│       └── eda_utils.py         # EDA functions
+├── pyproject.toml               # Configuration du projet (uv)
+└── README.md                    # Documentation
 ```
 
 ## Analyse
 
-### Processus d'analyse exploratoire (EDA)
+### Exploratoire data analysis
 
-Le notebook `eda.ipynb` réalise une analyse complète des données :
+In the `notebooks` folder :
+- `1_clean.ipynb`<br>
+  - loads raw data
+  - inspects (missing valules, ...)
+  - cleans
+  - splits
+  - saves into `data/clean_data/`
+
+- `2_process.ipynb`<br>
+    - Loads cleaned data<br>
+    - Searches colinearity<br>
+    - drops data<br>
+    - Saves into `data/data_processed`<br>
+
+
+réalise une analyse complète des données :
 - Chargement et inspection initiale du dataset
 - Détection et traitement des valeurs manquantes
 - Identification et gestion des valeurs aberrantes
@@ -103,20 +122,7 @@ En santé, un **Faux Négatif** (dire qu'une tumeur est bénigne alors qu'elle e
 - **Accuracy** : Taux de bonnes classifications global
 - **Matrice de confusion** : Visualisation détaillée des erreurs
 
-## Structure du projet
 
-```
-building-perceptron/
-├── raw_data/
-│   └── bcw_data.csv              # Dataset Breast Cancer Wisconsin
-├── perceptron.py                 # Implémentation pédagogique simple
-├── model_utils.py                # Perceptron sklearn + fonctions d'évaluation
-├── eda_utils.py                  # Utilitaires pour l'EDA
-├── eda.ipynb                     # Notebook d'analyse exploratoire
-├── 2_analysis.ipynb              # Notebook d'analyse complémentaire
-├── pyproject.toml                # Configuration du projet (uv)
-└── README.md                     # Documentation
-```
 
 ## Outils utilisés
 
