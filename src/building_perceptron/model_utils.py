@@ -23,6 +23,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.preprocessing import LabelEncoder
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 def evaluate_regression(
@@ -229,3 +230,39 @@ def evaluate_classification(
         "confusion_matrix": conf_matrix,
         "cv_results": cv_results,
     }
+
+
+class Perceptron(BaseEstimator, ClassifierMixin):
+    # Hérite de BaseEstimator (pour GridSearchCV) et ClassifierMixin (pour le score)
+
+    def __init__(self, threshold=0.5, learning_rate=0.01, n_iterations=100):
+        self.threshold = threshold
+        self.learning_rate = learning_rate
+        self.n_iterations = n_iterations
+        self.weights = None
+        self.bias = 0.0
+
+    def fit(self, X, y):
+        X = np.array(X)
+        y = np.array(y)
+
+        self.weights = np.zeros(X.shape[1])
+        self.bias = 0.0
+
+        for _ in range(self.n_iterations):
+            for i in range(len(y)):
+                prediction = self.predict(X[i].reshape(1, -1))[0]
+                error = y[i] - prediction
+
+                if error != 0:
+                    self.weights += self.learning_rate * error * X[i]
+                    self.bias += self.learning_rate * error
+
+        # Toujours retourner self dans fit()
+        return self
+
+    def predict(self, X):
+        X = np.array(X)
+        weighted_sum = np.dot(X, self.weights) + self.bias
+        # La fonction np.where agit comme un threshold
+        return np.where(weighted_sum >= self.threshold, 1, 0)

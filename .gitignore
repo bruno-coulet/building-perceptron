@@ -10,6 +10,7 @@ __pycache__/
 
 raw_data/
 data/
+img/
 
 
 2_analysis.ipynb

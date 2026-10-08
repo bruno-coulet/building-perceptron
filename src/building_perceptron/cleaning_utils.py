@@ -26,6 +26,8 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, RobustScaler
+from sklearn.base import BaseEstimator, clone
+
 
 
 def missing_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -438,14 +440,16 @@ def export_train_test_feather(
     y_tr.to_frame().to_feather(out_path / "y_train.feather")
     y_te.to_frame().to_feather(out_path / "y_test.feather")
 
+
 def preprocess_data(
     X_train: pd.DataFrame,
     X_test: pd.DataFrame | None = None,
     numeric_columns: list[str] | None = None,
     categorical_columns: list[str] | None = None,
+    scaler: BaseEstimator = RobustScaler(),
 ) -> tuple[np.ndarray, np.ndarray | None, ColumnTransformer]:
     """
-    Ajuste un ColumnTransformer (scaling robuste et One-Hot Encoding) sans fuite de données.
+    Ajuste un ColumnTransformer (scaling numérique et One-Hot Encoding) sans fuite de données.
 
     Parameters
     ----------
@@ -457,6 +461,9 @@ def preprocess_data(
         Colonnes numériques à normaliser. Si None, détectées automatiquement.
     categorical_columns : list[str] | None, default=None
         Colonnes catégorielles à encoder. Si None, détectées automatiquement.
+    scaler : BaseEstimator, default=RobustScaler()
+        Instance de scaler Scikit-Learn pour les colonnes numériques
+        (ex. RobustScaler(), StandardScaler()). Clonée en interne.
 
     Returns
     -------
@@ -464,8 +471,12 @@ def preprocess_data(
         - Matrice numpy d'entraînement transformée.
         - Matrice numpy de test transformée (ou None si X_test n'est pas fourni).
         - Objet ColumnTransformer ajusté pour réutilisation ultérieure.
+
+    Raises
+    ------
+    ValueError
+        Si aucune colonne numérique ou catégorielle valide n'est trouvée.
     """
-    # Détection automatique des colonnes si elles ne sont pas spécifiées
     if numeric_columns is None:
         numeric_columns = X_train.select_dtypes(include=[np.number]).columns.tolist()
 
@@ -476,7 +487,7 @@ def preprocess_data(
 
     transformers = []
     if numeric_columns:
-        transformers.append(("num", RobustScaler(), numeric_columns))
+        transformers.append(("num", clone(scaler), numeric_columns))
     if categorical_columns:
         transformers.append(
             (

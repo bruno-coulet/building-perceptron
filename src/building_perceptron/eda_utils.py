@@ -6,8 +6,8 @@ Description : Outils d'analyse exploratoire, sélection de features, visualisati
 Functions :
     - select_existing_features(features, columns) -> list[str]
     - target_correlations(X, y, n_top) -> pd.Series
-    - feature_collinearity(X, threshold) -> list[tuple[str, str, float]]
-    - select_best_features(X, y_or_target, threshold) -> pd.DataFrame
+    - correlated_features()(X, threshold) -> list[tuple[str, str, float]]
+    - drop_redundant_features(X, y_or_target, threshold) -> pd.DataFrame
     - plot_numeric_histograms(X, bins, n_cols, figsize_per_col) -> None
     - plot_qualitative(X, top_n, n_cols, figsize_per_col, figsize, height_per_row) -> None
     - plot_missing_bar(X, top_n, figsize) -> None
@@ -15,7 +15,7 @@ Functions :
     - plot_corr_heatmap(df, method, title, figsize, annot, fmt, vmin, vmax, cmap) -> None
     - scree_plot(pca, figsize) -> None
     - plot_correlation_circle(pca, components, feature_names) -> None
-    - plot_feature_collinearity(X, threshold, figsize) -> None
+    - plot_features_correlations(X, threshold, figsize) -> None
     - plot_target_correlations(X, y, n_top, figsize) -> None
 """
 
@@ -84,7 +84,7 @@ def target_correlations(
     return correlations.head(n_top)
 
 
-def feature_collinearity(
+def correlated_features(
     X: pd.DataFrame, threshold: float = 0.8
 ) -> list[tuple[str, str, float]]:
     """
@@ -115,48 +115,53 @@ def feature_collinearity(
     return sorted(collinear, key=lambda item: item[2], reverse=True)
 
 
-def select_best_features(
-    X: pd.DataFrame | pd.Series,
+def drop_redundant_features(
+    X: pd.DataFrame,
     y_or_target: pd.Series | np.ndarray | str,
     threshold: float = 0.90,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[str]]:
     """
-    Supprime les variables redondantes en conservant la plus corrélée à la cible.
+    Supprime les variables numériques redondantes en conservant, pour chaque paire
+    fortement corrélée (|r| > threshold), la variable la plus corrélée à la cible.
+
+    Les variables non numériques présentes dans X sont conservées sans modification.
 
     Parameters
     ----------
-    X : pd.DataFrame | pd.Series
-        Variables explicatives (ou DataFrame complet contenant la cible).
+    X : pd.DataFrame
+        Ensemble des variables explicatives (ou DataFrame complet contenant la cible).
     y_or_target : pd.Series | np.ndarray | str
-        Nom de la colonne cible (str) ou valeurs de la cible.
+        Nom de la colonne cible (si présente dans X) ou vecteur cible (Series / ndarray).
     threshold : float, default=0.90
-        Seuil de corrélation pour considérer deux variables comme redondantes.
+        Seuil de corrélation linéaire absolue au-delà duquel deux variables
+        sont jugées redondantes.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame réduit sans les variables redondantes.
+    tuple[pd.DataFrame, list[str]]
+        - DataFrame nettoyé des colonnes redondantes.
+        - Liste des noms des variables supprimées (triée par ordre alphabétique).
     """
-    if isinstance(X, pd.Series):
-        X = X.to_frame()
+    df_full = X.copy()
 
     if isinstance(y_or_target, str):
         target_col = y_or_target
-        if target_col not in X.columns:
-            raise ValueError(f"Target '{target_col}' absente du DataFrame.")
-        df_full = X.copy()
+        if target_col not in df_full.columns:
+            raise ValueError(f"Target '{target_col}' absente du DataFrame fourni.")
     else:
-        if isinstance(y_or_target, pd.Series):
-            y_series = y_or_target.copy()
-        else:
-            y_series = pd.Series(y_or_target, index=X.index, name="target")
+        target_series = (
+            y_or_target.copy()
+            if isinstance(y_or_target, pd.Series)
+            else pd.Series(y_or_target, index=df_full.index, name="target")
+        )
+        target_col = target_series.name or "target"
+        df_full[target_col] = target_series.values
 
-        target_col = y_series.name or "target"
-        df_full = X.copy()
-        df_full[target_col] = y_series.values
-
+    # 1. Matrice de corrélation absolue entre features numériques
     features_df = df_full.drop(columns=[target_col])
     corr_matrix = features_df.corr(numeric_only=True).abs()
+
+    # 2. Corrélation absolue de chaque variable numérique avec la cible
     target_corr = (
         df_full.corr(numeric_only=True).abs()[target_col].drop(labels=[target_col])
     )
@@ -168,6 +173,7 @@ def select_best_features(
     to_drop: set[str] = set()
     cols = corr_matrix.columns
 
+    # 3. Parcours des paires au-dessus du seuil et arbitrage
     for i in range(len(cols)):
         for j in range(i + 1, len(cols)):
             col_a = cols[i]
@@ -178,10 +184,13 @@ def select_best_features(
                 else:
                     to_drop.add(col_a)
 
-    reduced = features_df.drop(columns=list(to_drop), errors="ignore")
+    dropped_list = sorted(to_drop)
+    reduced_df = features_df.drop(columns=dropped_list, errors="ignore")
+
     if isinstance(y_or_target, str):
-        reduced[target_col] = df_full[target_col]
-    return reduced
+        reduced_df[target_col] = df_full[target_col]
+
+    return reduced_df, dropped_list
 
 
 def plot_numeric_histograms(
@@ -470,7 +479,7 @@ def plot_correlation_circle(
     plt.show()
 
 
-def plot_feature_collinearity(
+def plot_features_correlations(
     X: pd.DataFrame,
     threshold: float = 0.8,
     figsize: tuple[int, int] = (12, 10),
@@ -507,7 +516,7 @@ def plot_feature_collinearity(
         vmax=1.0,
         cbar_kws={"label": "Coefficient de corrélation"},
     )
-    plt.title(f"Colinéarité entre variables numériques (Seuil cible : {threshold})")
+    plt.title(f"Colinarity between numerical features (choosen threshold : {threshold})")
     plt.tight_layout()
     plt.show()
 

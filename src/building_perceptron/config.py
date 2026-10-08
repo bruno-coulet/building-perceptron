@@ -16,6 +16,7 @@ ROOT_DIR: Final[Path] = PACKAGE_DIR.parents[1]
 DATA_DIR: Final[Path] = ROOT_DIR / "data"
 RAW_DATA_DIR: Final[Path] = DATA_DIR / "raw_data"
 CLEAN_DATA_DIR: Final[Path] = DATA_DIR / "clean_data"
+PROCESSED_DATA_DIR: Final[Path] = DATA_DIR / "processed_data"
 
 DATA: Final[Path] = RAW_DATA_DIR / "bcw_data.csv"
 TARGET: Final[str] = "diagnosis"
