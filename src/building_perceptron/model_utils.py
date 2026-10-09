@@ -231,16 +231,28 @@ def evaluate_classification(
         "cv_results": cv_results,
     }
 
-
 class Perceptron(BaseEstimator, ClassifierMixin):
-    # Hérite de BaseEstimator (pour GridSearchCV) et ClassifierMixin (pour le score)
+    """Custom Perceptron with selectable activation function (step or sigmoid)."""
 
-    def __init__(self, threshold=0.5, learning_rate=0.01, n_iterations=100):
+    def __init__(self, threshold=0.5, learning_rate=0.01, n_iterations=100, activation="step"):
         self.threshold = threshold
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
+        self.activation = activation
         self.weights = None
         self.bias = 0.0
+
+    def _weighted_sum(self, X: np.ndarray) -> np.ndarray:
+        """Compute the pre-activation weighted sum."""
+        return np.dot(X, self.weights) + self.bias
+
+    def _activate(self, weighted_sum: np.ndarray) -> np.ndarray:
+        """Apply the activation function selected at instantiation."""
+        if self.activation == "step":
+            return np.where(weighted_sum >= 0, 1, 0)
+        elif self.activation == "sigmoid":
+            return 1 / (1 + np.exp(-weighted_sum))
+        raise ValueError(f"Unknown activation: {self.activation}")
 
     def fit(self, X, y):
         X = np.array(X)
@@ -258,11 +270,23 @@ class Perceptron(BaseEstimator, ClassifierMixin):
                     self.weights += self.learning_rate * error * X[i]
                     self.bias += self.learning_rate * error
 
-        # Toujours retourner self dans fit()
         return self
 
-    def predict(self, X):
+    def predict_proba(self, X) -> np.ndarray:
+        """Return class-1 probabilities (sigmoid output, or step heuristic)."""
         X = np.array(X)
-        weighted_sum = np.dot(X, self.weights) + self.bias
-        # La fonction np.where agit comme un threshold
-        return np.where(weighted_sum >= self.threshold, 1, 0)
+        weighted_sum = self._weighted_sum(X)
+        if self.activation == "sigmoid":
+            proba = 1 / (1 + np.exp(-weighted_sum))
+        else:
+            # Step activation has no probabilistic output; use a distance-based proxy
+            proba = 1 / (1 + np.exp(-weighted_sum))
+        return np.column_stack([1 - proba, proba])
+
+    def predict(self, X) -> np.ndarray:
+        """Return predicted classes using the instance activation."""
+        X = np.array(X)
+        weighted_sum = self._weighted_sum(X)
+        if self.activation == "sigmoid":
+            return (1 / (1 + np.exp(-weighted_sum)) >= self.threshold).astype(int)
+        return np.where(weighted_sum >= 0, 1, 0)
