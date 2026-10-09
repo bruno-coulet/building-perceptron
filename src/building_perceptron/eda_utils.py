@@ -469,7 +469,7 @@ def plot_correlation_circle(
     var_ratio = pca.explained_variance_ratio_
     ax.set_xlabel(f"Comp. {components[0] + 1} ({var_ratio[components[0]] * 100:.2f}%)")
     ax.set_ylabel(f"Comp. {components[1] + 1} ({var_ratio[components[1]] * 100:.2f}%)")
-    ax.set_title("Cercle des corrélations")
+    ax.set_title("Correlation Circle")
     ax.grid(True, alpha=0.3)
     ax.axhline(0, color="#555", linewidth=1)
     ax.axvline(0, color="#555", linewidth=1)
